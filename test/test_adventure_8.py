@@ -1,19 +1,52 @@
 import pytest
-import adventure
-import random
+from adventure import enter_dungeon, find_clue
 from unittest.mock import patch
-from io import StringIO
+import io
 import sys
-# Test enter_dungeon - puzzle challenge success
-def test_enter_dungeon_puzzle_success(monkeypatch, capsys):
-    monkeypatch.setattr('builtins.input', lambda _: "solve") # Choose to solve puzzle
-    monkeypatch.setattr('random.choice', lambda _: True) # Force puzzle success
-    initial_health = 50
-    dungeon_rooms_test_puzzle = [
-        ("A puzzle chamber", None, "puzzle", ("Puzzle solved!", "Puzzle failed!", -10)),
-    ]
-    updated_health, _ = adventure.enter_dungeon(initial_health, [], dungeon_rooms_test_puzzle)
-    assert updated_health == 40 # Health should decrease by 10 as per challenge outcome in example
+
+def test_cryptic_library_room_clues_found(capsys):
+    dungeon_rooms = [("The Cryptic Library", None, "library", None)]
+    player_stats = {'health': 100, 'attack': 5}
+    inventory = []
+    clues = set()
+    artifacts = {}
+
+    enter_dungeon(player_stats, inventory, dungeon_rooms, clues, artifacts)
     captured = capsys.readouterr()
-    assert "You encounter a puzzle!" in captured.out
-    assert "Puzzle solved!" in captured.out
+    assert "You enter the Cryptic Library." in captured.out
+    assert "You discovered a new clue:" in captured.out
+    assert len(clues) >= 1 # At least one clue should be found
+
+def test_cryptic_library_room_staff_of_wisdom_effect(capsys):
+    dungeon_rooms = [("The Cryptic Library", None, "library", None)]
+    player_stats = {'health': 100, 'attack': 5}
+    inventory = ["staff_of_wisdom"] # Player has the staff
+    clues = set()
+    artifacts = {}
+
+    enter_dungeon(player_stats, inventory, dungeon_rooms, clues, artifacts)
+    captured = capsys.readouterr()
+    assert "The Staff of Wisdom hums in your hand" in captured.out
+    assert "You feel you could now bypass a puzzle" in captured.out
+
+def test_cryptic_library_room_no_staff_no_bypass_message(capsys):
+    dungeon_rooms = [("The Cryptic Library", None, "library", None)]
+    player_stats = {'health': 100, 'attack': 5}
+    inventory = [] # Player does not have staff
+    clues = set()
+    artifacts = {}
+
+    enter_dungeon(player_stats, inventory, dungeon_rooms, clues, artifacts)
+    captured = capsys.readouterr()
+    assert "The Staff of Wisdom hums in your hand" not in captured.out
+    assert "You feel you could now bypass a puzzle" not in captured.out # No bypass message
+
+def test_cryptic_library_room_finds_two_clues():
+    dungeon_rooms = [("The Cryptic Library", None, "library", None)]
+    player_stats = {'health': 100, 'attack': 5}
+    inventory = []
+    clues = set()
+    artifacts = {}
+
+    enter_dungeon(player_stats, inventory, dungeon_rooms, clues, artifacts)
+    assert len(clues) == 2 # Exactly two clues should be found (as per assignment spec)
