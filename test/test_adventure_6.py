@@ -1,19 +1,43 @@
 import pytest
-import adventure
-import io
-import sys
-from unittest.mock import patch
-from io import StringIO
+from adventure import discover_artifact
 
-# --- Week 4 Specific Tests ---
+def test_discover_artifact_existing():
+    artifacts = {
+        "amulet_of_vitality": {"description": "amulet", "power": 10, "effect": "increases health"}
+    }
+    player_stats = {'health': 50, 'attack': 5}
+    updated_stats, updated_artifacts = discover_artifact(player_stats, artifacts, "amulet_of_vitality")
+    assert updated_stats['health'] == 60
+    assert "amulet_of_vitality" not in updated_artifacts
 
-# Test display_inventory function - with items
-def test_display_inventory_with_items(capsys):
-    inventory = ["rope", "grappling hook", "potion"]
-    adventure.display_inventory(inventory)
+def test_discover_artifact_non_existing(capsys):
+    artifacts = {}
+    player_stats = {'health': 50, 'attack': 5}
+    discover_artifact(player_stats, artifacts, "non_existent_artifact")
     captured = capsys.readouterr()
-    output_lines = captured.out.strip().split('\n') # Split output into lines
-    assert "Your inventory:" in output_lines[0]
-    assert "1. rope" in output_lines[1]
-    assert "2. grappling hook" in output_lines[2]
-    assert "3. potion" in output_lines[3]
+    assert "You found nothing of interest." in captured.out
+
+def test_discover_artifact_health_effect():
+    artifacts = {
+        "amulet_of_vitality": {"description": "amulet", "power": 10, "effect": "increases health"}
+    }
+    player_stats = {'health': 50, 'attack': 5}
+    updated_stats, _ = discover_artifact(player_stats, artifacts, "amulet_of_vitality")
+    assert updated_stats['health'] == 60
+
+def test_discover_artifact_attack_effect():
+    artifacts = {
+        "ring_of_strength": {"description": "ring", "power": 5, "effect": "enhances attack"}
+    }
+    player_stats = {'health': 50, 'attack': 5}
+    updated_stats, _ = discover_artifact(player_stats, artifacts, "ring_of_strength")
+    assert updated_stats['attack'] == 10
+
+def test_discover_artifact_prints_description(capsys):
+    artifacts = {
+        "amulet_of_vitality": {"description": "A glowing amulet.", "power": 10, "effect": "increases health"}
+    }
+    player_stats = {'health': 50, 'attack': 5}
+    discover_artifact(player_stats, artifacts, "amulet_of_vitality")
+    captured = capsys.readouterr()
+    assert "A glowing amulet." in captured.out
