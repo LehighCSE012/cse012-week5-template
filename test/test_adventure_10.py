@@ -1,16 +1,30 @@
 import pytest
-import adventure
-import random
-from unittest.mock import patch
-from io import StringIO
-import sys
+from adventure import enter_dungeon
 
-# Test enter_dungeon - no challenge room
-def test_enter_dungeon_no_challenge(capsys):
-    dungeon_rooms_test_none = [
-        ("A peaceful clearing", None, "none", None),
-    ]
-    adventure.enter_dungeon(100, [], dungeon_rooms_test_none)
+def test_tuple_immutability_error_handling(capsys):
+    dungeon_rooms = [("Room 1", "item1", "none", None)]
+    player_stats = {'health': 100, 'attack': 5}
+    inventory = []
+    clues = set()
+    artifacts = {}
+
+    enter_dungeon(player_stats, inventory, dungeon_rooms, clues, artifacts)
     captured = capsys.readouterr()
-    assert "There doesn't seem to be a challenge in this room." in captured.out
-    assert "A peaceful clearing" in captured.out # Check room description is printed
+    assert "Error: Cannot modify room tuples - they are immutable." in captured.out
+
+def test_enter_dungeon_runs_without_crash():
+    dungeon_rooms = [
+        ("Room 1", "item1", "none", None),
+        ("Room 2", None, "puzzle", ("success", "fail", -5))
+    ]
+    player_stats = {'health': 100, 'attack': 5}
+    inventory = []
+    clues = set()
+    artifacts = {}
+    try:
+        player_health, inventory_out, clues_out = enter_dungeon(player_stats, inventory, dungeon_rooms, clues, artifacts)
+        assert isinstance(player_health, int)
+        assert isinstance(inventory_out, list)
+        assert isinstance(clues_out, set)
+    except Exception as e:
+        pytest.fail(f"enter_dungeon raised an exception: {e}")
